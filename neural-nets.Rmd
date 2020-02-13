@@ -1,6 +1,6 @@
 ---
 title: "Neural Networks"
-author: "Charles Lang"
+author: "Sizheng Zhu"
 date: "1/28/2018"
 output: html_document
 ---
