@@ -1,0 +1,102 @@
+---
+title: "Neural Networks"
+author: "Charles Lang"
+date: "1/28/2018"
+output: html_document
+---
+
+## Part I - Introduction to Using Neural Nets
+
+In the attached data sets attention1.csv and attention2.csv, you will find data that describe features assocaited with webcam images of 100 students' faces as they particpate in an online discussion. The variables are:
+
+eyes - student has their eyes open (1 = yes, 0 = no)
+face.forward - student is facing the camera (1 = yes, 0 = no)
+chin.up - student's chin is raised above 45 degrees (1 = yes, 0 = no)
+attention - whether the student was paying attention when asked (1 = yes, 0 = no)
+
+We will use the webcam data to build a neural net to predict whether or not a student is attending.
+
+First install and load the neuralnet package
+```{r}
+install.packages("neuralnet")
+library(neuralnet)
+```
+
+Now upload your data
+```{r}
+library(readr)
+D1 <- read_csv("attention1.csv")
+View(D1)
+  
+D2 <- read_csv("attention2.csv")
+View(D2)
+
+```
+
+Now you can build a neural net that predicts attention based on webcam images. The command "neuralnet" sets up the model. It is composed of four basic arguments:
+
+- A formula that describes the inputs and outputs of the neural net (attention is our output)
+- The data frame that the model will use
+- How many hidden layers are in our neural net
+- A threshold that tells the model when to stop adjusting weights to find a better fit. If error does not change more than the threshold from one iteration to the next, the algorithm will stop (We will use 0.01, so if prediction error does not change by more than 1% from one iteration to the next the algorithm will halt)
+
+```{r}
+net <- neuralnet(attention ~ eyes + face.forward + chin.up, D1, hidden = 1, threshold = 0.01)
+
+plot(net)
+```
+
+You have now trained a neural network! The plot shows you the layers of your newtork as black nodes and edges with the calculated weights on each edge. The blue nodes and edges are called bias terms. The bias term anchors the activation function, the weights change the shape of the activation function while the bias term changes the overall position of the activation function - if you have used linear regressionthe bias term is like the intercept of the regression equation, it shifts the trend line up and down the y axis, while the other parameters change the angle of the line. The plot also reports the final error rate and the number of iterations ("steps") that it took to reach these weights.
+
+What happens if you increase the number of hidden layers in the neural net? Build a second neural net with more layers in it and determine if this iproves your predictions or not? How can you tell if your new neural network is doing a better job than your first?
+```{r}
+net2 <- neuralnet(attention ~ eyes + face.forward + chin.up, D1, hidden = 10, threshold = 0.01)
+
+plot(net2)
+
+
+# When I increase the hidden layers in the neural net, I find the errors decrease. I think the second neural net is better because it is more accurate. 
+
+```
+
+Now use your preferred neural net to predict the second data set. You will need to create a new data frame (D3) that only includes the input layers to use this command.
+
+```{r}
+D3 <- D2[,1:3]
+```
+
+Now you can create predictions using your neural net
+```{r}
+net.prediction <- neuralnet::compute(net2, D3)
+r1<-as.data.frame(net.prediction$net.result)
+r2<-ifelse(r1>=0.5, 1, 0)
+
+D2$attention<-as.factor(D2$attention)
+r2<-as.data.frame(r2)
+colnames(r2)[1]<-"prediction"
+r2[,1]<-as.factor(r2[,1])
+
+install.packages("caret")
+library(caret)
+
+
+confusionMatrix(r2$prediction, D2$attention)
+
+
+#You can access the predictions from your model as "net.prediction$net.result". Predictions will be numeric estimates from 1 or 0, convert these into exact predictions of 1 and 0 and then determine the accuracy of your neural net on this new data.
+
+```
+
+## Please answer the following questions:
+
+1. How accurate is your neural net? How can you tell?
+
+The accuracy of my neural net is 94%. The accuracy is the proportion of the correct prediction result.
+
+2. How would you explain your model to the students whose behavior you are predicting? 
+
+My model can tell me whether you pay attention or not even if I cannot see your face. 
+
+3. This is a very simple example of a neural network. Real facial recognition is very complex though. Would a neural network be a good solution for predicting real facial movements? Why, why not? 
+
+Based on the accuracy of the model, I think it is a good prediction of attention. However, attention is a relatively simple face movement. The real emotion expression in face is very complicated. People with different culture background, different personalities have different habits in expressing their emotion in face. If we want to predict some very subtle emotion, the neural network seems to be not quite effective. 
